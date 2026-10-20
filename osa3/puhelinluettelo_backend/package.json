@@ -5,7 +5,10 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:ui": "rm -rf dist && cd ../../osa2/puhelinluettelo && npm run build && cp -r dist ../../osa3/puhelinluettelo_backend",
+    "deploy": "git add . && git commit -m 'uusi build' && git push",
+    "deploy:full": "npm run build:ui && npm run deploy"
   },
   "author": "Kalle Eerola",
   "license": "MIT",
