@@ -56,7 +56,12 @@ const App = () => {
 
           showNotification(`Updated ${returnedPerson.name}`)
         })
-        .catch(() => {
+        .catch(error => {
+          if (error.response && error.response.status === 400) {
+            showNotification(error.response.data.error, 'error')
+            return
+          }
+
           showNotification(
             `Information of ${existingPerson.name} was already removed from server`,
             'error'
@@ -80,6 +85,9 @@ const App = () => {
       .then(returnedPerson => {
         setPersons(persons.concat(returnedPerson))
         showNotification(`Added ${returnedPerson.name}`)
+      })
+      .catch(error => {
+        showNotification(error.response.data.error, 'error')
       })
 
     setNewName('')
