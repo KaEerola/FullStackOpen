@@ -31,6 +31,29 @@ describe('when there is initially one user in db', () => {
     assert.ok(response.body[0].id)
   })
 
+  test('users are returned with the blogs they have added', async () => {
+    const newBlog = {
+      title: 'Things I Don\'t Know as of 2018',
+      author: 'Dan Abramov',
+      url: 'https://overreacted.io/things-i-dont-know-as-of-2018/',
+    }
+
+    const loginResponse = await api
+      .post('/api/login')
+      .send({ username: 'root', password: 'sekret' })
+
+    const blogResponse = await api
+      .post('/api/blogs')
+      .set('Authorization', `Bearer ${loginResponse.body.token}`)
+      .send(newBlog)
+      .expect(201)
+
+    const response = await api.get('/api/users')
+    const root = response.body.find(user => user.username === 'root')
+
+    assert.deepStrictEqual(root.blogs, [{ ...newBlog, id: blogResponse.body.id }])
+  })
+
   test('returned users do not reveal the password hash', async () => {
     const response = await api.get('/api/users')
 
