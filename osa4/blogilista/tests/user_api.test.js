@@ -83,6 +83,69 @@ describe('when there is initially one user in db', () => {
       assert.notStrictEqual(userInDb.passwordHash, newUser.password)
       assert(await bcrypt.compare(newUser.password, userInDb.passwordHash))
     })
+
+    test('succeeds when username and password are exactly 3 characters long', async () => {
+      const usersAtStart = await helper.usersInDb()
+
+      await api
+        .post('/api/users')
+        .send({ username: 'abc', name: 'Short Names', password: 'xyz' })
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
+
+      const usersAtEnd = await helper.usersInDb()
+      assert.strictEqual(usersAtEnd.length, usersAtStart.length + 1)
+    })
+
+    const expectCreationToFail = async (newUser, expectedError) => {
+      const usersAtStart = await helper.usersInDb()
+
+      const result = await api
+        .post('/api/users')
+        .send(newUser)
+        .expect(400)
+        .expect('Content-Type', /application\/json/)
+
+      assert(result.body.error.includes(expectedError), `unexpected error: ${result.body.error}`)
+
+      const usersAtEnd = await helper.usersInDb()
+      assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+    }
+
+    test('fails with status code 400 and message if username is already taken', async () => {
+      await expectCreationToFail(
+        { username: 'root', name: 'Superuser', password: 'salainen' },
+        'expected `username` to be unique'
+      )
+    })
+
+    test('fails with status code 400 and message if username is missing', async () => {
+      await expectCreationToFail(
+        { name: 'No Username', password: 'salainen' },
+        'Path `username` is required'
+      )
+    })
+
+    test('fails with status code 400 and message if username is shorter than 3 characters', async () => {
+      await expectCreationToFail(
+        { username: 'ab', name: 'Short Username', password: 'salainen' },
+        'is shorter than the minimum allowed length (3)'
+      )
+    })
+
+    test('fails with status code 400 and message if password is missing', async () => {
+      await expectCreationToFail(
+        { username: 'nopassword', name: 'No Password' },
+        'password must be at least 3 characters long'
+      )
+    })
+
+    test('fails with status code 400 and message if password is shorter than 3 characters', async () => {
+      await expectCreationToFail(
+        { username: 'shortpassword', name: 'Short Password', password: 'ab' },
+        'password must be at least 3 characters long'
+      )
+    })
   })
 })
 
